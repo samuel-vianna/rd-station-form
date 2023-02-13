@@ -40,7 +40,9 @@ export function CustomTextInputComponent({
         {label}
       </FormLabel>
       <InputGroup>
-        {icon && <InputRightElement pointerEvents="none" children={icon} />}
+        {icon && (
+          <InputRightElement pointerEvents="none">{icon}</InputRightElement>
+        )}
         <Input
           {...{ placeholder, type, onChange }}
           {...register(id, { required: true })}
