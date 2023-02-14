@@ -127,7 +127,6 @@ export function FormComponent({
             type="number"
             icon={<HiPhone />}
           />
-          <CustomTextInputComponent id="verification" label="2 + 11 = ?" />
         </Stack>
         <Button
           mt={8}
