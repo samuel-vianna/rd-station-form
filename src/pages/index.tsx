@@ -1,15 +1,7 @@
 import Head from "next/head";
-import Image from "next/image";
+import axios from "axios";
 import styles from "@/styles/Home.module.css";
-import {
-  Box,
-  Button,
-  Heading,
-  Input,
-  Stack,
-  Text,
-  useToast,
-} from "@chakra-ui/react";
+import { Box, Button, Heading, Stack, Text, useToast } from "@chakra-ui/react";
 import { CustomTextInputComponent } from "@/components/input/textInput";
 import { HiPhone } from "react-icons/hi";
 import { FormProvider, useForm } from "react-hook-form";
@@ -27,13 +19,42 @@ interface formProps {
 export default function Home() {
   const toast = useToast({ duration: 3000, position: "top", isClosable: true });
   const [isFormSent, setIsFormSent] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const api = axios.create({ baseURL: "https://api.rd.services" });
 
   const toggleFormStatus = () => setIsFormSent((prev) => !prev);
 
-  const onSubmit = (data: formProps) => {
-    toast({ title: "Cadastro realizado com sucesso!", status: "success" });
-    toggleFormStatus();
-    console.log(data);
+  const onSubmit = async (data: formProps) => {
+    try {
+      setIsLoading(true);
+      await api.request({
+        url: `/platform/conversions?api_key=${process.env.NEXT_PUBLIC_TOKEN}`,
+        method: "POST",
+        data: {
+          event_type: "CONVERSION",
+          event_family: "CDP",
+          payload: {
+            conversion_identifier: "conversao_exemplo",
+            email: data.email,
+            name: data.name,
+            personal_phone: data.phone,
+          },
+        },
+      });
+
+      toast({ title: "Cadastro realizado com sucesso!", status: "success" });
+      toggleFormStatus();
+      console.log(data);
+    } catch (err) {
+      toast({
+        title: "Erro ao realizar cadastro.",
+        description: "Se o erro persistir, por favor contate o suporte.",
+        status: "error",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -52,7 +73,7 @@ export default function Home() {
         {isFormSent ? (
           <SuccessComponent onClick={toggleFormStatus} />
         ) : (
-          <FormComponent onSubmit={onSubmit} />
+          <FormComponent isLoading={isLoading} onSubmit={onSubmit} />
         )}
       </main>
     </>
@@ -76,7 +97,13 @@ export function SuccessComponent({ onClick }: { onClick: () => void }) {
 }
 
 // form component
-export function FormComponent({ onSubmit }: { onSubmit: (data: any) => void }) {
+export function FormComponent({
+  isLoading,
+  onSubmit,
+}: {
+  isLoading: boolean;
+  onSubmit: (data: any) => void;
+}) {
   const methods = useForm<formProps>({ resolver: yupResolver(formSchema) });
   return (
     <FormProvider {...methods}>
@@ -102,7 +129,13 @@ export function FormComponent({ onSubmit }: { onSubmit: (data: any) => void }) {
           />
           <CustomTextInputComponent id="verification" label="2 + 11 = ?" />
         </Stack>
-        <Button mt={8} w="100%" type="submit" color="black">
+        <Button
+          mt={8}
+          w="100%"
+          type="submit"
+          color="black"
+          isLoading={isLoading}
+        >
           Enviar
         </Button>
       </form>
